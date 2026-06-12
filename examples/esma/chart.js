@@ -1,17 +1,27 @@
-d3.csv('../../ESMA2.csv', function(err, rows) {
+d3.csv('../../ESMA2.csv', function(csvErr, csvRows) {
+	d3.json('../../events.json', function(jsonErr, eventsPayload) {
 	var baseData;
+	var mergedRows = [];
 	var filters = {
 		year: '',
 		place: '',
 		person: ''
 	};
 
-	if (err) {
-		d3.select('#empty').text('No se pudo cargar ESMA2.csv.');
+	if (!csvErr && csvRows && csvRows.length) {
+		mergedRows = mergedRows.concat(csvRows);
+	}
+
+	if (!jsonErr) {
+		mergedRows = mergedRows.concat(normalizeEventRows(eventsPayload));
+	}
+
+	if (!mergedRows.length) {
+		d3.select('#empty').text('No se pudieron cargar datos desde ESMA2.csv ni events.json.');
 		return;
 	}
 
-	baseData = buildGroupedScenes(rows || []);
+	baseData = buildGroupedScenes(mergedRows);
 
 	if (!baseData.scenes.length) {
 		d3.select('#empty').text('No hay datos suficientes para construir escenas.');
@@ -163,7 +173,7 @@ d3.csv('../../ESMA2.csv', function(err, rows) {
 
 		updateMeta(prepared, filters);
 	}
-
+	});
 });
 
 function buildGroupedScenes(rows) {
@@ -400,6 +410,129 @@ function normalizeText(value) {
 		return '';
 	}
 	return String(value).replace(/\s+/g, ' ').trim();
+}
+
+function normalizeEventRows(payload) {
+	var items = extractEventItems(payload);
+	var rows = [];
+
+	items.forEach(function(eventItem) {
+		var date = normalizeEventDate(eventItem.time_start);
+		var place = normalizeText(eventItem.location_name);
+		var people = extractPeopleFromEvent(eventItem);
+		var confidence = Number(eventItem.extraction_confidence);
+
+		if (!date || !place || !people.length) {
+			return;
+		}
+
+		if (!isNaN(confidence) && confidence < 0.6) {
+			return;
+		}
+
+		if (!eventMentionsESMA(eventItem)) {
+			return;
+		}
+
+		rows.push({
+			ID: eventItem.event_id || '',
+			date: date,
+			'Título': normalizeText(eventItem.title),
+			Lugar: place,
+			Particip: eventItem.participant_count || people.length,
+			Refs: eventItem.reference_count || '',
+			nombre_persona: people.join(', '),
+			accion: normalizeText((eventItem.title || '') + ' ' + (eventItem.description || ''))
+		});
+	});
+
+	return rows;
+}
+
+function extractEventItems(payload) {
+	if (!payload) {
+		return [];
+	}
+
+	if (Object.prototype.toString.call(payload) === '[object Array]') {
+		return payload;
+	}
+
+	if (Object.prototype.toString.call(payload.items) === '[object Array]') {
+		return payload.items;
+	}
+
+	return [];
+}
+
+function normalizeEventDate(value) {
+	var normalized = normalizeText(value);
+
+	if (!normalized) {
+		return '';
+	}
+
+	if (normalized.indexOf('T') > -1) {
+		return normalized.split('T')[0];
+	}
+
+	return normalized;
+}
+
+function extractPeopleFromEvent(eventItem) {
+	var fromTitle = extractPeople(cleanEventTitleToNames(eventItem.title));
+
+	if (fromTitle.length) {
+		return fromTitle;
+	}
+
+	return extractPeople(extractLeadingNameFromDescription(eventItem.description));
+}
+
+function cleanEventTitleToNames(title) {
+	var cleaned = normalizeText(title);
+
+	if (!cleaned) {
+		return '';
+	}
+
+	cleaned = cleaned
+		.replace(/^(Detenci[oó]n|Secuestro|Privaci[oó]n ilegal de la libertad|Captura|Asesinato|Homicidio|Tortura|Liberaci[oó]n)(\s+y\s+[a-záéíóúüñ ]+)?\s+de\s+/i, '')
+		.replace(/\s+el\s+\d{1,2}\s+de\s+[a-záéíóúüñ]+\s+de\s+\d{4}.*/i, '')
+		.replace(/\s+en\s+[a-záéíóúüñ]+\s+de\s+\d{4}.*/i, '')
+		.replace(/\s+entre\s+\d{4}\s+y\s+\d{4}.*/i, '')
+		.replace(/\s+durante\s+\d{4}.*/i, '')
+		.replace(/\s+por\s+.*$/i, '');
+
+	return normalizeText(cleaned);
+}
+
+function extractLeadingNameFromDescription(description) {
+	var normalized = normalizeText(description);
+	var match;
+
+	if (!normalized) {
+		return '';
+	}
+
+	match = normalized.match(/^([A-ZÁÉÍÓÚÜÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ'\-\. ]{3,}?)\s+fue\b/);
+
+	if (match && match[1]) {
+		return normalizeText(match[1]);
+	}
+
+	return '';
+}
+
+function eventMentionsESMA(eventItem) {
+	var text = normalizeText(
+		(eventItem.title || '') + ' ' +
+		(eventItem.description || '') + ' ' +
+		(eventItem.location_name || '') + ' ' +
+		(eventItem.document_filename || '')
+	);
+
+	return /\besma\b/i.test(text);
 }
 
 function extractPeople(value) {
