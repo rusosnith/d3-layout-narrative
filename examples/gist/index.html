@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Narrative Charts Example</title>
+	<style>
+		body {
+			margin: 0;
+			background: #faf8f3;
+			color: #1d1d1d;
+			font-family: Georgia, serif;
+		}
+
+		header {
+			padding: 24px 28px 12px;
+		}
+
+		h1 {
+			margin: 0 0 8px;
+			font-size: 2rem;
+		}
+
+		header p {
+			margin: 0;
+			line-height: 1.5;
+			max-width: 72ch;
+		}
+
+		#chart {
+			overflow-x: auto;
+			padding: 0 16px 32px;
+		}
+
+		text {
+			font-family: Helvetica, Arial, sans-serif;
+			font-size: 12px;
+		}
+
+		rect {
+			fill: none;
+			stroke: #000;
+		}
+
+		path {
+			fill: none;
+			stroke-width: 2;
+			stroke: #333;
+		}
+
+		path.light {
+			stroke: #3c6da8;
+		}
+
+		path.dark {
+			stroke: #df2929;
+		}
+
+		rect.dark,
+		.appearance.dark {
+			stroke: #df2929;
+			fill: #df2929;
+		}
+
+		path.vader {
+			stroke: #111;
+		}
+
+		rect.vader,
+		.appearance.vader {
+			stroke: #111;
+			fill: #111;
+		}
+
+		path.other {
+			stroke: #7b6a58;
+		}
+
+		rect.other,
+		.appearance.other {
+			stroke: #7b6a58;
+			fill: #7b6a58;
+		}
+
+		rect.light,
+		.appearance.light {
+			fill: #3c6da8;
+			stroke: #3c6da8;
+		}
+
+		.intro text:first-child {
+			fill: #fff;
+			stroke: #f9f9f9;
+			stroke-width: 3;
+		}
+
+		.intro text+text {
+			fill: #333;
+		}
+
+		.intro text+text.dark {
+			fill: #df2929;
+		}
+
+		.intro text+text.light {
+			fill: #3c6da8;
+		}
+
+		.intro text+text.vader {
+			fill: #111;
+		}
+
+		.intro text+text.other {
+			fill: #7b6a58;
+		}
+
+		a.back {
+			display: inline-block;
+			margin-top: 12px;
+			color: #6e563c;
+		}
+	</style>
+</head>
+<body>
+	<header>
+		<h1>Ejemplo local del gist</h1>
+		<p>Adaptación del ejemplo de referencia de drzax usando los datos originales, D3 v3 local y la build generada de narrative.js en este repositorio.</p>
+		<a class="back" href="/">Volver a la portada local</a>
+	</header>
+	<div id="chart"></div>
+	<script src="../../node_modules/d3/d3.js"></script>
+	<script src="../../narrative.js"></script>
+	<script src="./chart.js"></script>
+</body>
+</html>

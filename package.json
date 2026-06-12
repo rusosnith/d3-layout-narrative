@@ -29,7 +29,11 @@
     "time-grunt": "~0.3.2"
   },
   "scripts": {
-    "start": "npm install && grunt"
+    "build": "grunt smash uglify:js docco:js",
+    "serve": "node server.js",
+    "start": "npm run serve",
+    "test": "mocha test/index.js",
+    "test:build": "npm run build && npm test"
   },
   "dependencies": {
     "grunt-docco": "^0.4.0"

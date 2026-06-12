@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Narrative Charts Local Runner</title>
+	<style>
+		:root {
+			color-scheme: light;
+			font-family: Georgia, serif;
+			background: #f4efe6;
+			color: #1f1a17;
+		}
+
+		body {
+			margin: 0;
+			min-height: 100vh;
+			background:
+				radial-gradient(circle at top left, rgba(210, 161, 91, 0.22), transparent 34%),
+				linear-gradient(180deg, #fbf7f0 0%, #f1e7d7 100%);
+		}
+
+		main {
+			max-width: 760px;
+			margin: 0 auto;
+			padding: 64px 24px;
+		}
+
+		h1 {
+			font-size: clamp(2.2rem, 6vw, 4rem);
+			line-height: 0.95;
+			margin: 0 0 16px;
+		}
+
+		p {
+			font-size: 1.05rem;
+			line-height: 1.6;
+			max-width: 56ch;
+		}
+
+		.links {
+			display: grid;
+			gap: 16px;
+			margin-top: 36px;
+		}
+
+		a.card {
+			display: block;
+			padding: 20px 22px;
+			border-radius: 16px;
+			text-decoration: none;
+			color: inherit;
+			background: rgba(255, 252, 247, 0.84);
+			border: 1px solid rgba(76, 55, 34, 0.12);
+			box-shadow: 0 18px 35px rgba(63, 43, 24, 0.09);
+		}
+
+		a.card:hover {
+			transform: translateY(-1px);
+			box-shadow: 0 22px 42px rgba(63, 43, 24, 0.14);
+		}
+
+		strong {
+			display: block;
+			font-size: 1.1rem;
+			margin-bottom: 6px;
+		}
+	</style>
+</head>
+<body>
+	<main>
+		<h1>Narrative Charts</h1>
+		<p>Servidor local mínimo para inspeccionar la librería generada, abrir la documentación anotada y ejecutar los tests desde navegador y desde Node.</p>
+		<div class="links">
+			<a class="card" href="/examples/gist/">
+				<strong>Ver ejemplo narrativo</strong>
+				Carga una adaptación local del gist de referencia con los datos de Star Wars y la build de este repo.
+			</a>
+			<a class="card" href="/examples/esma/">
+				<strong>Ver ejemplo ESMA</strong>
+				Procesa ESMA2.csv y agrupa personas que coincidieron en el mismo lugar y mes para construir las escenas.
+			</a>
+			<a class="card" href="/test/browser.html">
+				<strong>Ver tests en navegador</strong>
+				Ejecuta Mocha sobre narrative.js y muestra el resultado en pantalla.
+			</a>
+			<a class="card" href="/docs/index.html">
+				<strong>Ver documentación anotada</strong>
+				Abre la salida de Docco ya generada para revisar la API y el código.
+			</a>
+		</div>
+	</main>
+</body>
+</html>
