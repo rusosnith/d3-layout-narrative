@@ -19,16 +19,18 @@ d3.csv('../../ESMA2.csv', function(err, rows) {
 	}
 
 	setupFilters(baseData, filters, render);
+	bindResponsiveRedraw('esmaNarrative', render);
 	render();
 
 	function render() {
 		var filteredScenes = applyFilters(baseData.scenes, filters);
 		var prepared = buildNarrativeDataFromScenes(filteredScenes, baseData.personStatusByName);
 		var sceneWidth = 12;
-		var width = Math.max(1600, Math.max(1, prepared.sceneObjects.length) * sceneWidth * 9);
+		var width = getAvailableChartWidth('#chart', 320, 40);
 		var height = 900;
 		var svg;
 		var narrative;
+		var filterScenesEnabled = d3.select('#filter-scenes').property('checked');
 
 		d3.select('#chart').selectAll('*').remove();
 		d3.select('#empty').text('');
@@ -55,6 +57,7 @@ d3.csv('../../ESMA2.csv', function(err, rows) {
 		svg.selectAll('text.temp').remove();
 
 		narrative = d3.layout.narrative()
+			.filterScenes(filterScenesEnabled)
 			.scenes(prepared.sceneObjects)
 			.size([width, height])
 			.pathSpace(14)
@@ -160,6 +163,7 @@ d3.csv('../../ESMA2.csv', function(err, rows) {
 
 		updateMeta(prepared, filters);
 	}
+
 });
 
 function buildGroupedScenes(rows) {
@@ -257,10 +261,6 @@ function buildNarrativeDataFromScenes(scenes, personStatusByName) {
 	scenes.forEach(function(scene) {
 		var names = Object.keys(scene.peopleByName).sort();
 
-		if (names.length < 2) {
-			return;
-		}
-
 		names.forEach(function(name) {
 			var status;
 
@@ -308,6 +308,7 @@ function setupFilters(baseData, filters, onChange) {
 	var yearSelect = d3.select('#filter-year');
 	var placeSelect = d3.select('#filter-place');
 	var personSelect = d3.select('#filter-person');
+	var filterScenesCheckbox = d3.select('#filter-scenes');
 
 	fillSelect(yearSelect, 'Todos los anios', baseData.years);
 	fillSelect(placeSelect, 'Todos los lugares', baseData.places);
@@ -328,6 +329,10 @@ function setupFilters(baseData, filters, onChange) {
 		onChange();
 	});
 
+	filterScenesCheckbox.on('change', function() {
+		onChange();
+	});
+
 	d3.select('#reset-filters').on('click', function() {
 		filters.year = '';
 		filters.place = '';
@@ -335,6 +340,7 @@ function setupFilters(baseData, filters, onChange) {
 		yearSelect.property('value', '');
 		placeSelect.property('value', '');
 		personSelect.property('value', '');
+		filterScenesCheckbox.property('checked', false);
 		onChange();
 	});
 }

@@ -1,3 +1,26 @@
+// Inline replacements for the three D3 helpers used by this module.
+// This makes the module self-contained with zero D3 runtime dependency.
+function _interpolateNumber(a, b) {
+	return function(t) { return a + (b - a) * t; };
+}
+
+function _arrayMin(arr, fn) {
+	var m = Infinity, v, i;
+	for (i = 0; i < arr.length; i++) {
+		v = fn ? fn(arr[i]) : arr[i];
+		if (v < m) m = v;
+	}
+	return m;
+}
+
+function _arrayMax(arr, fn) {
+	var m = -Infinity, v, i;
+	for (i = 0; i < arr.length; i++) {
+		v = fn ? fn(arr[i]) : arr[i];
+		if (v > m) m = v;
+	}
+	return m;
+}
 // Narrative Charts
 // ================
 //
@@ -5,7 +28,7 @@
 //
 // The constructor takes no arguements. All relevant object properties should
 // be set using the setter functions.
-d3.layout.narrative = function(){
+export function narrative() {
 
 // Import jLouvian
 // ---------------
@@ -656,13 +679,13 @@ narrative.link = function() {
 
 		// Set control points.
 		if (orientation === 'vertical') {
-			ci = d3.interpolateNumber(y0, y1);
+			ci = _interpolateNumber(y0, y1);
 			cx0 = x0;
 			cy0 = ci(curvature);
 			cx1 = x1;
 			cy1 = ci(1-curvature);
 		} else {
-			ci = d3.interpolateNumber(x0, x1);
+			ci = _interpolateNumber(x0, x1);
 			cx0 = ci(curvature);
 			cy0 = y0;
 			cx1 = ci(1-curvature);
@@ -1352,16 +1375,16 @@ function computeIntroductionPositions() {
 	// Create a bounding box around a collection of nodes.
 	function bBox(arr) {
 		var x0,x1,y0,y1;
-		x0 = d3.min(arr, function(d){
+		x0 = _arrayMin(arr, function(d){
 			return d.bounds()[0][0];
 		});
-		x1 = d3.max(arr, function(d) {
+		x1 = _arrayMax(arr, function(d) {
 			return d.bounds()[1][0];
 		});
-		y0 = d3.min(arr, function(d){
+		y0 = _arrayMin(arr, function(d){
 			return d.bounds()[0][1];
 		});
-		y1 = d3.max(arr, function(d) {
+		y1 = _arrayMax(arr, function(d) {
 			return d.bounds()[1][1];
 		});
 		return [[x0,y0],[x1,y1]];
@@ -1462,4 +1485,4 @@ function getLabelBounds(){
 
 }
 
-};
+}

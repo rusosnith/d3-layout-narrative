@@ -34,7 +34,7 @@
 
 		.filters {
 			display: grid;
-			grid-template-columns: repeat(4, minmax(180px, 1fr));
+			grid-template-columns: repeat(5, minmax(180px, 1fr));
 			gap: 10px;
 			padding: 0 28px 14px;
 			font: 13px/1.4 "Helvetica Neue", Arial, sans-serif;
@@ -47,6 +47,26 @@
 			letter-spacing: 0.08em;
 			color: #6a5a46;
 			margin-bottom: 4px;
+		}
+
+		.filters label.checkbox {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			height: 36px;
+			margin: 0;
+			padding: 0 6px;
+			text-transform: none;
+			letter-spacing: 0;
+			font-size: 13px;
+			color: #201911;
+			border: 1px solid #b6a890;
+			border-radius: 8px;
+			background: #fffdf9;
+		}
+
+		.filters label.checkbox input {
+			margin: 0;
 		}
 
 		.filters select,
@@ -219,6 +239,12 @@
 			<select id="filter-person"></select>
 		</div>
 		<div>
+			<label class="checkbox" for="filter-scenes">
+				<input id="filter-scenes" type="checkbox">
+				Filtrar escenas de una sola persona
+			</label>
+		</div>
+		<div>
 			<label for="reset-filters">Accion</label>
 			<button id="reset-filters" type="button">Limpiar filtros</button>
 		</div>
@@ -234,6 +260,7 @@
 	<div id="chart"></div>
 	<div class="empty" id="empty"></div>
 	<script src="../../node_modules/d3/d3.js"></script>
+	<script src="../shared/chart-utils.js"></script>
 	<script src="../../narrative.js"></script>
 	<script src="./chart.js"></script>
 </body>

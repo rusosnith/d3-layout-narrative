@@ -10,7 +10,7 @@ d3.layout.narrative = function(){
 // Import jLouvian
 // ---------------
 // [jLouvian](https://github.com/upphiminn/jLouvain) is a open source (MIT)
-// javascript implementation of the Louvian method of
+// javascript implementation of the Louvain method of
 // [community detection](https://www.wikiwand.com/en/Louvain_Modularity).
 import 'vendor/jLouvian/jLouvian.js';
 
@@ -18,7 +18,7 @@ import 'vendor/jLouvian/jLouvian.js';
 var narrative,
 	scenes,	characters, introductions, links,
 	size, orientation, pathSpace, scale,
-	labelSize, labelPosition, groupMargin, scenePadding,
+	labelSize, labelPosition, groupMargin, scenePadding, filterScenes,
 	groups;
 
 // Set some defaults.
@@ -30,6 +30,7 @@ labelPosition = 'right';
 scenePadding = [0,0,0,0];
 groupMargin = 0;
 orientation = 'horizontal';
+filterScenes = false;
 
 // Public functions (the API)
 // ==========================
@@ -206,6 +207,21 @@ narrative.labelPosition = function(_) {
 	return narrative;
 };
 
+// Filter scenes
+// -------------
+//
+// `narrative.filterScenes([boolean])`
+//
+// Enable filtering of single-appearance characters and scenes that become too
+// small after that reduction. Defaults to `false` so the chart shows all data.
+narrative.filterScenes = function(_) {
+	if (!arguments.length) {
+		return filterScenes;
+	}
+	filterScenes = _;
+	return narrative;
+};
+
 // Links
 // -----
 //
@@ -332,11 +348,11 @@ return narrative;
 // ----------------------
 //
 // Populate the scenes with characters from the characters array.
-// This method also cleanses the data to exclude characters which appear only once
-// and scenes with fewer than two characters.
+// This method keeps all collected appearances by default and prepares the
+// per-scene/per-character references used by the layout.
 function computeSceneCharacters() {
 
-	var appearances, finished;
+	var appearances;
 
 	// Create a map of scenes to characters (i.e. appearances).
 	appearances = [];
@@ -366,54 +382,36 @@ function computeSceneCharacters() {
 		scene._y = scene.y || false;
 	});
 
-	// Recursively filter appearances so we ultimately only include characters
-	// with more than a single appearance and scenes with more than a single
-	// character.
-	while(!finished) {
-		finished = true;
-		appearances = appearances.filter(filterAppearances);
+	// Re-construct `characters` and `scenes` arrays with the collected appearances.
+	if (filterScenes) {
+		var sceneCounts = new Map();
+
+		appearances.forEach(function(appearance) {
+			sceneCounts.set(appearance.scene, (sceneCounts.get(appearance.scene) || 0) + 1);
+		});
+
+		appearances = appearances.filter(function(appearance) {
+			return (sceneCounts.get(appearance.scene) || 0) > 1;
+		});
 	}
 
-	// Filter appearances.
-	//
-	// TODO: this could probably be more efficient (maybe with an index https://gist.github.com/AshKyd/adc7fb024787bd543fc5)
-	function filterAppearances(appearance){
-		var counts, keep;
-
-		counts = appearances.reduce(function(c, a){
-
-			if (appearance.character === a.character) {
-				c[0]++;
-			}
-
-			if (appearance.scene === a.scene) {
-				c[1]++;
-			}
-
-			return c;
-
-		}, [0,0]);
-
-		keep = counts[0] >= 1 && counts[1] >= 1;
-		finished = finished && keep;
-
-		return keep;
-	}
-
-	// Re-construct `characters` and `scenes` arrays with filtered appearances.
 	characters = [];
 	scenes = [];
+	var characterSet = new Set();
+	var sceneSet = new Set();
 	appearances.forEach(function(appearance){
 
 		// Cross reference scenes and characters based on appearances.
 		appearance.scene.appearances.push(appearance);
 		appearance.character.appearances.push(appearance);
 
-		if (characters.indexOf(appearance.character) === -1) {
+		if (!characterSet.has(appearance.character)) {
+			characterSet.add(appearance.character);
 			characters.push(appearance.character);
 		}
 
-		if (scenes.indexOf(appearance.scene) === -1) {
+		if (!sceneSet.has(appearance.scene)) {
+			sceneSet.add(appearance.scene);
 			scenes.push(appearance.scene);
 		}
 	});
@@ -425,9 +423,14 @@ function computeSceneCharacters() {
 // Cluster characters based on their co-occurence in scenes
 function computeCharacterGroups() {
 	var nodes, edges, clusters, partitioner, groupsMap, initGroups;
+	var characterIndexes = new Map();
+	var edgesByPair = {};
 
 	// An array of character indexes.
 	nodes = characters.map(function(d,i){return i;});
+	characters.forEach(function(character, index){
+		characterIndexes.set(character, index);
+	});
 
 	initGroups = characters.reduce(function(g,d,i){
 		if (d.initialgroup) {
@@ -439,28 +442,26 @@ function computeCharacterGroups() {
 	// Calculate the edges based on a character's involvement in scenes.
 	edges = [];
 	scenes.forEach(function(scene){
-		edges = edges.concat(sceneEdges(scene.appearances));
-	});
+		var i, j;
+		for (i = scene.appearances.length - 1; i >= 0; i--) {
+			for (j = i - 1; j >= 0; j--) {
+				var source = characterIndexes.get(scene.appearances[i].character);
+				var target = characterIndexes.get(scene.appearances[j].character);
+				var a = Math.min(source, target);
+				var b = Math.max(source, target);
+				var key = a + '_' + b;
 
-	// Consolidate edges into a unique set of relationships with a weighting
-	// based on how often they appear together.
-	edges = edges.reduce(function(result, edge) {
-		var resultEdge;
+				if (!edgesByPair[key]) {
+					edgesByPair[key] = {source: a, target: b, weight: 0};
+				}
 
-		resultEdge = result.filter(function(resultEdge){
-			return (resultEdge.target === edge[0] || resultEdge.target === edge[1]) &&
-				(resultEdge.source === edge[0] || resultEdge.source === edge[1]);
-
-		})[0] || {source: edge[0], target: edge[1], weight: 0};
-
-		resultEdge.weight++;
-
-		if (resultEdge.weight === 1) {
-			result.push(resultEdge);
+				edgesByPair[key].weight++;
+			}
 		}
-
-		return result;
-	}, []);
+	});
+	edges = Object.keys(edgesByPair).map(function(key){
+		return edgesByPair[key];
+	});
 
 	// Generate the groups.
 	partitioner = jLouvain().nodes(nodes).edges(edges);
@@ -486,17 +487,6 @@ function computeCharacterGroups() {
 		character.group = group;
 	});
 
-	// Creates a single link between each pair of characters in a scene.
-	function sceneEdges(list) {
-		var i, j, matrix;
-		matrix = [];
-		for (i=list.length;i--;){
-			for (j=i;j--;){
-				matrix.push([characters.indexOf(list[i].character),characters.indexOf(list[j].character)]);
-			}
-		}
-		return matrix;
-	}
 }
 
 // Group scenes

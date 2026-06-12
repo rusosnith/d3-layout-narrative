@@ -1,7 +1,7 @@
 {
-  "name": "d3-narrative-charts",
-  "version": "1.0.0",
-  "description": "",
+  "name": "d3-layout-narrative",
+  "version": "2.0.0",
+  "description": "XKCD-style narrative chart layout engine for D3. Zero D3 runtime dependency — works as an ES module in Observable, Vite, Rollup, etc.",
   "author": {
     "name": "Simon Elvery",
     "email": "simon@elvery.net",
@@ -14,10 +14,23 @@
     }
   ],
   "main": "narrative.js",
+  "module": "narrative.esm.js",
+  "exports": {
+    ".": {
+      "import": "./narrative.esm.js",
+      "default": "./narrative.js"
+    }
+  },
+  "files": [
+    "narrative.js",
+    "narrative.esm.js",
+    "narrative.min.js"
+  ],
   "devDependencies": {
     "chai": "^2.2.0",
     "d3": "^3.5.5",
     "grunt": "~0.4.5",
+    "grunt-cli": "~0.1.13",
     "grunt-contrib-jshint": "~0.10.0",
     "grunt-contrib-uglify": "~0.5.0",
     "grunt-contrib-watch": "~0.6.1",
@@ -25,11 +38,15 @@
     "grunt-smash": "^0.1.0",
     "grunt-version": "~0.3.0",
     "load-grunt-config": "~0.9.2",
+    "marked": "0.3.19",
     "mocha": "^2.2.1",
     "time-grunt": "~0.3.2"
   },
   "scripts": {
-    "build": "grunt smash uglify:js docco:js",
+    "build:legacy": "grunt smash uglify:js",
+    "build:esm": "node scripts/build-esm.js",
+    "build:docs": "grunt docco:js",
+    "build": "npm run build:legacy && npm run build:esm",
     "serve": "node server.js",
     "start": "npm run serve",
     "test": "mocha test/index.js",
